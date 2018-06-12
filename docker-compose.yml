@@ -1,0 +1,51 @@
+version: '3'
+services:
+  wordpress:
+    depends_on:
+      - db
+    build: ./wordpress
+    image: wordpress_ubuntu:16.04-latest-wordpress
+    working_dir: /var/www/html/
+    volumes:
+      - ./wp-content:/var/www/html/wp-content
+      - ./wordpress/:/home
+    command: /bin/bash -c "cd /home && cp -Rf /ubuntu/wordpress/* /var/www/html/ && rm -rf /ubuntu/wordpress && cp wp-config.php /var/www/html/ && chown -R www-data.www-data /var/www/html && ./start.sh"
+    environment:
+      WORDPRESS_DB_USER: webuser
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_PASSWORD: password
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - back
+
+  db:
+    image: mysql:5.7
+    restart: always
+    volumes:
+       - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: webuser
+      MYSQL_PASSWORD: password
+    networks:
+      - back
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - db
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - back
+networks:
+  back:
+volumes:
+  db_data:
